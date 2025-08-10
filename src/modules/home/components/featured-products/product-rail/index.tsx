@@ -1,6 +1,7 @@
 import { getProductsById } from "@/lib/data/products"
 import { HttpTypes } from "@medusajs/types"
 import { Text } from "@medusajs/ui"
+import { B2BCustomer } from "@/types"
 
 import InteractiveLink from "@/modules/common/components/interactive-link"
 import ProductPreview from "@/modules/products/components/product-preview"
@@ -8,9 +9,11 @@ import ProductPreview from "@/modules/products/components/product-preview"
 export default async function ProductRail({
   collection,
   region,
+  customer,
 }: {
   collection: HttpTypes.StoreCollection
   region: HttpTypes.StoreRegion
+  customer?: B2BCustomer | null
 }) {
   const { products } = collection
 
@@ -35,7 +38,7 @@ export default async function ProductRail({
         {productsWithPrices &&
           productsWithPrices.map((product) => (
             <li key={product.id}>
-              <ProductPreview product={product} region={region} isFeatured />
+              <ProductPreview product={product} region={region} isFeatured customer={customer} />
             </li>
           ))}
       </ul>

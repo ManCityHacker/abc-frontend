@@ -5,20 +5,16 @@ import { Text, clx } from "@medusajs/ui"
 import { useAuth } from "@/lib/context/auth-context"
 import { User } from "@medusajs/icons"
 
-export default function PreviewPrice({ price }: { price: VariantPrice }) {
+export default function PreviewPrice({ price }: { price: VariantPrice | null }) {
   const { isAuthenticated, isLoading } = useAuth()
-
-  if (!price) {
-    return null
-  }
 
   // Show loading state while checking authentication
   if (isLoading) {
     return <div className="w-20 h-6 bg-gray-100 animate-pulse rounded" />
   }
 
-  // Show login prompt if not authenticated
-  if (!isAuthenticated) {
+  // Show login prompt if not authenticated or no price provided
+  if (!isAuthenticated || !price) {
     return (
       <div className="flex items-center gap-1 text-abc-primary">
         <User className="w-4 h-4" />

@@ -5,23 +5,27 @@ import LocalizedClientLink from "@/modules/common/components/localized-client-li
 import Thumbnail from "../thumbnail"
 import PreviewAddToCart from "./preview-add-to-cart"
 import PreviewPrice from "./price"
+import { B2BCustomer } from "@/types"
 
 export default async function ProductPreview({
   product,
   isFeatured,
   region,
+  customer,
 }: {
   product: HttpTypes.StoreProduct
   isFeatured?: boolean
   region: HttpTypes.StoreRegion
+  customer?: B2BCustomer | null
 }) {
   if (!product) {
     return null
   }
 
-  const { cheapestPrice } = getProductPrice({
+  // Only calculate price if customer is authenticated
+  const { cheapestPrice } = customer ? getProductPrice({
     product,
-  })
+  }) : { cheapestPrice: null }
 
   const inventoryQuantity = product.variants?.reduce((acc, variant) => {
     return acc + (variant?.inventory_quantity || 0)
@@ -47,8 +51,8 @@ export default async function ProductPreview({
           </Text>
         </div>
         <div className="flex flex-col gap-0">
-          {cheapestPrice && <PreviewPrice price={cheapestPrice} />}
-          <Text className="text-neutral-600 text-[0.55rem] small:text-[0.6rem]">Excl. VAT</Text>
+          <PreviewPrice price={cheapestPrice} />
+          {customer && <Text className="text-neutral-600 text-[0.55rem] small:text-[0.6rem]">Excl. VAT</Text>}
         </div>
         <div className="flex justify-between items-center flex-wrap gap-1">
           <div className="flex flex-row gap-1 items-center">
