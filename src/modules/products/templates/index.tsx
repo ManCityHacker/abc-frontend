@@ -44,9 +44,9 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
             </div>
             
             {/* Right Column: Product Facts Sidebar + Content */}
-            <div className="flex gap-4">
-              {/* Product Facts Sidebar */}
-              <div className="flex-shrink-0 flex items-start pt-4">
+            <div className="flex flex-col lg:flex-row gap-4">
+              {/* Product Facts Sidebar - Full width on mobile, sidebar on desktop */}
+              <div className="flex-shrink-0 flex lg:items-start lg:pt-4">
                 <ProductFacts product={product} />
               </div>
               
