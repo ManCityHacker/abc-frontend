@@ -1,10 +1,32 @@
+"use client"
+
 import { VariantPrice } from "@/lib/util/get-product-price"
 import { Text, clx } from "@medusajs/ui"
+import { useAuth } from "@/lib/context/auth-context"
+import { User } from "@medusajs/icons"
 
-// TODO: Price needs to access price list type
-export default async function PreviewPrice({ price }: { price: VariantPrice }) {
+export default function PreviewPrice({ price }: { price: VariantPrice }) {
+  const { isAuthenticated, isLoading } = useAuth()
+
   if (!price) {
     return null
+  }
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return <div className="w-20 h-6 bg-gray-100 animate-pulse rounded" />
+  }
+
+  // Show login prompt if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="flex items-center gap-1 text-abc-primary">
+        <User className="w-4 h-4" />
+        <Text className="font-medium text-sm">
+          Login to view
+        </Text>
+      </div>
+    )
   }
 
   return (

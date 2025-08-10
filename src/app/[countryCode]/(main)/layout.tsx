@@ -2,6 +2,7 @@ import { retrieveCart } from "@/lib/data/cart"
 import { retrieveCustomer } from "@/lib/data/customer"
 import { listCartFreeShippingPrices } from "@/lib/data/fulfillment"
 import { getBaseURL } from "@/lib/util/env"
+import { AuthProvider } from "@/lib/context/auth-context"
 import CartMismatchBanner from "@/modules/layout/components/cart-mismatch-banner"
 import Footer from "@/modules/layout/templates/footer"
 import { NavigationHeader } from "@/modules/layout/templates/nav"
@@ -24,7 +25,7 @@ export default async function PageLayout(props: { children: React.ReactNode }) {
   }
 
   return (
-    <>
+    <AuthProvider initialCustomer={customer}>
       <NavigationHeader />
 
       {customer && cart && (
@@ -38,10 +39,10 @@ export default async function PageLayout(props: { children: React.ReactNode }) {
       {cart && freeShippingPrices && (
         <FreeShippingPriceNudge
           variant="popup"
-          cart={cart}
+          cart={cart as any}
           freeShippingPrices={freeShippingPrices}
         />
       )}
-    </>
+    </AuthProvider>
   )
 }
