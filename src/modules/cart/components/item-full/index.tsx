@@ -85,6 +85,7 @@ const ItemFull = ({
   }
 
   const maxQuantity = item.variant?.inventory_quantity ?? 100
+  const productHandle = item.product?.handle ?? item.variant?.product?.handle
 
   return (
     <Container
@@ -93,14 +94,23 @@ const ItemFull = ({
       })}
     >
       <div className="flex gap-x-4 items-start">
-        <LocalizedClientLink href={`/products/${item.product_handle}`}>
+        {productHandle ? (
+          <LocalizedClientLink href={`/products/${productHandle}`}>
+            <Thumbnail
+              thumbnail={item.thumbnail}
+              size="square"
+              type="full"
+              className="bg-neutral-100 rounded-lg w-20 h-20"
+            />
+          </LocalizedClientLink>
+        ) : (
           <Thumbnail
             thumbnail={item.thumbnail}
             size="square"
             type="full"
             className="bg-neutral-100 rounded-lg w-20 h-20"
           />
-        </LocalizedClientLink>
+        )}
         <div className="flex flex-col gap-y-2 justify-between min-h-full self-stretch">
           <div className="flex flex-col">
             <span className="text-neutral-600 text-[0.6rem]">BRAND</span>
