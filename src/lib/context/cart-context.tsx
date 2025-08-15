@@ -4,6 +4,7 @@ import {
   addToCartBulk,
   deleteLineItem,
   emptyCart,
+  retrieveCart,
   updateLineItem,
 } from "@/lib/data/cart"
 import { addToCartEventBus } from "@/lib/data/cart-event-bus"
@@ -72,6 +73,28 @@ export function CartProvider({
   useEffect(() => {
     setIsUpdatingCart(false)
   }, [cart])
+
+  const refreshCart = useCallback(async () => {
+    const latest = await retrieveCart().catch(() => null)
+    startTransition(() => {
+      setOptimisticCart(latest)
+      setIsUpdatingCart(false)
+    })
+  }, [setOptimisticCart, startTransition])
+
+  useEffect(() => {
+    if (!optimisticCart) {
+      console.warn("CartProvider: cart is null")
+    } else if (!optimisticCart.items || optimisticCart.items.length === 0) {
+      console.warn("CartProvider: cart items array is empty")
+    } else {
+      console.debug(
+        "CartProvider: cart has",
+        optimisticCart.items.length,
+        "items"
+      )
+    }
+  }, [optimisticCart])
 
   const handleOptimisticAddToCart = useCallback(
     async (payload: AddToCartEventPayload) => {
@@ -160,24 +183,27 @@ export function CartProvider({
         })
 
         setIsUpdatingCart(true)
-
-        await addToCartBulk({
-          lineItems: payload.lineItems.map((lineItem) => ({
-            variant_id: lineItem.productVariant.id,
-            quantity: lineItem.quantity,
-          })),
-          countryCode: countryCode as string,
-        }).catch((e) => {
+        try {
+          await addToCartBulk({
+            lineItems: payload.lineItems.map((lineItem) => ({
+              variant_id: lineItem.productVariant.id,
+              quantity: lineItem.quantity,
+            })),
+            countryCode: countryCode as string,
+          })
+        } catch (e: any) {
           if (e.message === "Cart is pending approval") {
             toast.error("Cart is locked for approval.")
           } else {
             toast.error("Failed to add to cart")
           }
           setOptimisticCart(prevCart)
-        })
+        }
+
+        await refreshCart()
       })
     },
-    [setOptimisticCart]
+    [setOptimisticCart, refreshCart]
   )
 
   useEffect(() => {
@@ -213,11 +239,14 @@ export function CartProvider({
     })
 
     setIsUpdatingCart(true)
-
-    await deleteLineItem(lineItem).catch((e) => {
+    try {
+      await deleteLineItem(lineItem)
+    } catch (e) {
       toast.error("Failed to delete item")
       setOptimisticCart(prevCart)
-    })
+    }
+
+    await refreshCart()
   }
 
   const handleUpdateCartQuantity = async (
@@ -272,14 +301,18 @@ export function CartProvider({
 
     if (!isOptimisticItemId(lineItem)) {
       setIsUpdatingCart(true)
-      await updateLineItem({
-        lineId: lineItem,
-        data: { quantity },
-      }).catch((e) => {
+      try {
+        await updateLineItem({
+          lineId: lineItem,
+          data: { quantity },
+        })
+      } catch (e) {
         toast.error("Failed to update cart quantity")
         setOptimisticCart(prevCart)
-      })
+      }
     }
+
+    await refreshCart()
   }
 
   const handleEmptyCart = async () => {
@@ -294,10 +327,14 @@ export function CartProvider({
 
     setIsUpdatingCart(true)
 
-    await emptyCart().catch((e) => {
+    try {
+      await emptyCart()
+    } catch (e) {
       toast.error("Failed to empty cart")
       setOptimisticCart(prevCart)
-    })
+    }
+
+    await refreshCart()
   }
 
   const sortedItems = useMemo(() => {
