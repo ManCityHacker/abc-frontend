@@ -1,6 +1,5 @@
 "use client"
 
-import { retrieveCustomer } from "@/lib/data/customer"
 import { B2BCustomer } from "@/types/global"
 import { createContext, useContext, useEffect, useState, ReactNode } from "react"
 
@@ -25,8 +24,12 @@ export function AuthProvider({ children, initialCustomer = null }: AuthProviderP
   const refreshCustomer = async () => {
     try {
       setIsLoading(true)
-      const fetchedCustomer = await retrieveCustomer()
-      setCustomer(fetchedCustomer)
+      const res = await fetch("/api/customer", { credentials: "include" })
+      if (!res.ok) {
+        throw new Error("Failed to fetch customer")
+      }
+      const data = await res.json()
+      setCustomer(data.customer)
     } catch (error) {
       console.error("Error refreshing customer:", error)
       setCustomer(null)
@@ -36,11 +39,10 @@ export function AuthProvider({ children, initialCustomer = null }: AuthProviderP
   }
 
   useEffect(() => {
-    if (initialCustomer) {
-      setCustomer(initialCustomer)
-      setIsLoading(false)
-    } else {
+    if (!initialCustomer) {
       refreshCustomer()
+    } else {
+      setIsLoading(false)
     }
   }, [initialCustomer])
 
