@@ -1,20 +1,17 @@
 "use client"
 
-import { retrieveCart } from "@/lib/data/cart"
-import { retrieveCustomer } from "@/lib/data/customer"
 import AccountButton from "@/modules/account/components/account-button"
-import CartButton from "@/modules/cart/components/cart-button"
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
 import { MegaMenuWrapper } from "@/modules/layout/components/mega-menu"
 import SkeletonAccountButton from "@/modules/skeletons/components/skeleton-account-button"
 import SkeletonCartButton from "@/modules/skeletons/components/skeleton-cart-button"
 import SkeletonMegaMenu from "@/modules/skeletons/components/skeleton-mega-menu"
-import { Suspense, useState, useEffect } from "react"
+import { Suspense, useState, useEffect, ReactNode } from "react"
 import Image from "next/image"
 import { Button } from "@medusajs/ui"
 import { X, Menu } from "lucide-react"
 
-function NavigationContent({ customer }: { customer: any }) {
+export default function NavigationContent({ customer, cartButton }: { customer: any; cartButton: ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   // Close mobile menu on window resize to larger screen
@@ -147,7 +144,7 @@ function NavigationContent({ customer }: { customer: any }) {
 
                 <Suspense fallback={<SkeletonCartButton />}>
                   <div className="text-abc-red">
-                    <CartButton />
+                    {cartButton}
                   </div>
                 </Suspense>
               </div>
@@ -276,9 +273,4 @@ function NavigationContent({ customer }: { customer: any }) {
       )}
     </>
   )
-}
-
-export async function NavigationHeader() {
-  const customer = await retrieveCustomer().catch(() => null)
-  return <NavigationContent customer={customer} />
 }
