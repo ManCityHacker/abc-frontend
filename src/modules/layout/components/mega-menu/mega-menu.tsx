@@ -105,11 +105,12 @@ const MegaMenu = ({
         onMouseLeave={handleMenuLeave}
         className="relative z-50"
       >
-        <span
-          className="hover:text-abc-red-dark transition-colors font-merriweather text-abc-red cursor-pointer"
+        <LocalizedClientLink
+          href="/store"
+          className="hover:text-abc-red-dark transition-colors font-merriweather text-abc-red"
         >
           Our Products
-        </span>
+        </LocalizedClientLink>
         
         {/* Main Dropdown */}
         <div className={clx(
