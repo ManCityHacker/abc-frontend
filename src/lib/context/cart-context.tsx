@@ -221,7 +221,10 @@ export function CartProvider({
 
     setIsUpdatingCart(true)
 
-    const result = await removeCartLineItemAction(lineItem)
+    const result = await removeCartLineItemAction({
+      cartId: optimisticCart?.id,
+      lineId: lineItem
+    })
     
     if (!result.success) {
       toast.error(result.error || "Failed to delete item")
@@ -324,7 +327,7 @@ export function CartProvider({
   }
 
   const sortedItems = useMemo(() => {
-    return optimisticCart?.items?.sort((a: any, b: any) => {
+    return optimisticCart?.items?.sort((a: StoreCartLineItem, b: StoreCartLineItem) => {
       return (a.created_at ?? "") > (b.created_at ?? "") ? -1 : 1
     })
   }, [optimisticCart])

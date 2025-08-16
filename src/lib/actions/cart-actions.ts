@@ -121,11 +121,26 @@ export async function updateCartLineItemAction(
 /**
  * Server Action to remove item from cart
  */
-export async function removeCartLineItemAction(lineId: string): Promise<CartActionResult> {
+export async function removeCartLineItemAction({
+  cartId,
+  lineId
+}: {
+  cartId?: string
+  lineId: string
+}): Promise<CartActionResult> {
   try {
-    console.log("Server action: Removing line item", { lineId })
+    console.log("Server action: Removing line item", { cartId, lineId })
 
-    await deleteLineItem(lineId)
+    // Skip optimistic items (they don't exist on the server yet)
+    if (lineId.startsWith("__optimistic__")) {
+      console.log("Server action: Skipping optimistic item deletion")
+      return {
+        success: true,
+        message: "Item removed from cart"
+      }
+    }
+
+    await deleteLineItem(lineId, cartId)
 
     console.log("Server action: Successfully removed line item")
 

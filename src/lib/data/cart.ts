@@ -345,12 +345,13 @@ export async function updateLineItem({
     .catch(medusaError)
 }
 
-export async function deleteLineItem(lineId: string) {
+export async function deleteLineItem(lineId: string, explicitCartId?: string) {
   if (!lineId) {
     throw new Error("Missing lineItem ID when deleting line item")
   }
 
-  const cartId = await getCartId()
+  // Use explicit cartId if provided, otherwise get from cookies
+  const cartId = explicitCartId || (await getCartId())
   if (!cartId) {
     throw new Error("Missing cart ID when deleting line item")
   }
