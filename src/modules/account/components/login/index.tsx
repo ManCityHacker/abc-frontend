@@ -4,8 +4,10 @@ import ErrorMessage from "@/modules/checkout/components/error-message"
 import { SubmitButton } from "@/modules/checkout/components/submit-button"
 import Button from "@/modules/common/components/button"
 import Input from "@/modules/common/components/input"
+import { useAuth } from "@/lib/context/auth-context"
 import { Checkbox, Text } from "@medusajs/ui"
 import { useState, useTransition } from "react"
+import { useRouter } from "next/navigation"
 
 type Props = {
   setCurrentView: (view: LOGIN_VIEW) => void
@@ -14,6 +16,8 @@ type Props = {
 const Login = ({ setCurrentView }: Props) => {
   const [message, setMessage] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const { setCustomer } = useAuth()
+  const router = useRouter()
 
   const handleSubmit = async (formData: FormData) => {
     startTransition(async () => {
@@ -21,6 +25,9 @@ const Login = ({ setCurrentView }: Props) => {
         const result = await login(null, formData)
         if (result) {
           setMessage(result)
+        } else {
+          // Login was successful, refresh the page to get updated customer data
+          router.refresh()
         }
       } catch (error) {
         setMessage("Login failed. Please try again.")

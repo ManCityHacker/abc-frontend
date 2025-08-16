@@ -1,5 +1,9 @@
 "use client"
 
+import React, { Suspense, useState, useEffect } from "react"
+import Image from "next/image"
+import { Button } from "@medusajs/ui"
+import { X, Menu } from "lucide-react"
 import AccountButton from "@/modules/account/components/account-button"
 import CartButton from "@/modules/cart/components/cart-button"
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
@@ -8,17 +12,10 @@ import MobileNavigationMenu from "@/modules/layout/components/mobile-navigation-
 import SkeletonAccountButton from "@/modules/skeletons/components/skeleton-account-button"
 import SkeletonCartButton from "@/modules/skeletons/components/skeleton-cart-button"
 import SkeletonMegaMenu from "@/modules/skeletons/components/skeleton-mega-menu"
-import { B2BCustomer } from "@/types/global"
-import { Suspense, useState, useEffect } from "react"
-import Image from "next/image"
-import { Button } from "@medusajs/ui"
-import { X, Menu } from "lucide-react"
+import { useAuth } from "@/lib/context/auth-context"
 
-interface NavigationContentProps {
-  customer: B2BCustomer | null
-}
-
-export default function NavigationContent({ customer }: NavigationContentProps) {
+export default function NavigationContent() {
+  const { customer } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   // Close mobile menu on window resize to larger screen
