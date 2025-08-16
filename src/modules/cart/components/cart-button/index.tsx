@@ -1,20 +1,19 @@
 import { CartProvider } from "@/lib/context/cart-context"
-import { retrieveCart } from "@/lib/data/cart"
-import { retrieveCustomer } from "@/lib/data/customer"
-import { listCartFreeShippingPrices } from "@/lib/data/fulfillment"
 import CartDrawer from "@/modules/cart/components/cart-drawer"
 import { StoreFreeShippingPrice } from "@/types/shipping-option/http"
+import { B2BCustomer, B2BCart } from "@/types/global"
 
-export default async function CartButton() {
-  const cart = await retrieveCart().catch(() => null)
-  const customer = await retrieveCustomer()
+interface CartButtonProps {
+  cart?: B2BCart | null
+  customer?: B2BCustomer | null
+  freeShippingPrices?: StoreFreeShippingPrice[]
+}
 
-  let freeShippingPrices: StoreFreeShippingPrice[] = []
-
-  if (cart) {
-    freeShippingPrices = await listCartFreeShippingPrices(cart.id)
-  }
-
+export default function CartButton({ 
+  cart = null, 
+  customer = null, 
+  freeShippingPrices = [] 
+}: CartButtonProps = {}) {
   return (
     <CartProvider cart={cart}>
       <CartDrawer customer={customer} freeShippingPrices={freeShippingPrices} />

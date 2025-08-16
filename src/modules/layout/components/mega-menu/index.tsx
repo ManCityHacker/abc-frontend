@@ -1,9 +1,10 @@
-import { listCategories } from "@/lib/data/categories"
 import MegaMenu from "./mega-menu"
 
-export async function MegaMenuWrapper() {
-  const categories = await listCategories().catch(() => [])
+interface MegaMenuWrapperProps {
+  categories?: any[]
+}
 
+export function MegaMenuWrapper({ categories = [] }: MegaMenuWrapperProps = {}) {
   return <MegaMenu categories={categories} />
 }
 

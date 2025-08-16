@@ -1,7 +1,10 @@
-import { retrieveCustomer } from "@/lib/data/customer"
 import NavigationContent from "@/modules/layout/components/navigation-content"
+import { B2BCustomer } from "@/types/global"
 
-export async function NavigationHeader() {
-  const customer = await retrieveCustomer().catch(() => null)
+interface NavigationHeaderProps {
+  customer?: B2BCustomer | null
+}
+
+export async function NavigationHeader({ customer = null }: NavigationHeaderProps = {}) {
   return <NavigationContent customer={customer} />
 }

@@ -1,9 +1,9 @@
 "use client"
 
 import AccountButton from "@/modules/account/components/account-button"
-import CartButton from "@/modules/cart/components/cart-button"
+import ClientCartWrapper from "@/modules/cart/components/client-cart-wrapper"
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
-import { MegaMenuWrapper } from "@/modules/layout/components/mega-menu"
+import ClientMegaMenuWrapper from "@/modules/layout/components/client-mega-menu-wrapper"
 import MobileNavigationMenu from "@/modules/layout/components/mobile-navigation-menu"
 import SkeletonAccountButton from "@/modules/skeletons/components/skeleton-account-button"
 import SkeletonCartButton from "@/modules/skeletons/components/skeleton-cart-button"
@@ -77,7 +77,7 @@ export default function NavigationContent({ customer }: NavigationContentProps) 
                 <ul className="flex space-x-8 text-abc-red font-merriweather text-lg">
                   <li>
                     <Suspense fallback={<SkeletonMegaMenu />}>
-                      <MegaMenuWrapper />
+                      <ClientMegaMenuWrapper />
                     </Suspense>
                   </li>
                   <li>
@@ -151,7 +151,7 @@ export default function NavigationContent({ customer }: NavigationContentProps) 
 
                 <Suspense fallback={<SkeletonCartButton />}>
                   <div className="text-abc-red">
-                    <CartButton />
+                    <ClientCartWrapper />
                   </div>
                 </Suspense>
               </div>
