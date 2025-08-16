@@ -15,6 +15,11 @@ import {
   getCartId,
   removeCartId,
   setCartId,
+  getCartCreationLock,
+  setCartCreationLock,
+  removeCartCreationLock,
+  setRegionId,
+  setCustomerId,
 } from "./cookies"
 import { retrieveCustomer } from "./customer"
 import { getRegion } from "./regions"
@@ -51,8 +56,9 @@ export async function retrieveCart(id?: string) {
     })
 }
 
-export async function getOrSetCart(countryCode: string) {
-  let cart = await retrieveCart()
+export async function getOrSetCart(countryCode: string): Promise<B2BCart | null> {
+  // First, try to retrieve existing cart with retry logic
+  let cart = await retrieveCartWithRetry()
   const region = await getRegion(countryCode)
   const customer = await retrieveCustomer()
 
@@ -60,35 +66,147 @@ export async function getOrSetCart(countryCode: string) {
     throw new Error(`Region not found for country code: ${countryCode}`)
   }
 
-  const headers = {
-    ...(await getAuthHeaders()),
+  // If we have a cart, validate it and potentially update region
+  if (cart) {
+    // Check if region needs updating
+    if (cart.region?.id !== region.id) {
+      console.log(`Updating cart region from ${cart.region?.id} to ${region.id}`)
+      const headers = { ...(await getAuthHeaders()) }
+      
+      try {
+        await sdk.store.cart.update(cart.id!, { region_id: region.id }, {}, headers)
+        const cartCacheTag = await getCacheTag("carts")
+        revalidateTag(cartCacheTag)
+        
+        // Re-fetch cart after region update
+        cart = await retrieveCartWithRetry()
+      } catch (error) {
+        console.error("Failed to update cart region:", error)
+        // Don't create new cart just because region update failed
+      }
+    }
+    return cart
   }
 
-  if (!cart) {
+  // No existing cart found, create a new one with locking mechanism
+  return await createNewCartWithLock(region.id, customer)
+}
+
+async function retrieveCartWithRetry(maxRetries: number = 3): Promise<B2BCart | null> {
+  let lastError: any
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const cartId = await getCartId()
+      
+      if (!cartId) {
+        console.log("No cart ID found in cookies")
+        return null
+      }
+
+      console.log(`Attempting to retrieve cart: ${cartId} (attempt ${attempt}/${maxRetries})`)
+      
+      const cart = await retrieveCart(cartId)
+      
+      if (cart) {
+        console.log(`Successfully retrieved cart: ${cartId}`)
+        return cart
+      }
+      
+      console.log(`Cart ${cartId} not found on backend`)
+      return null
+      
+    } catch (error) {
+      lastError = error
+      console.error(`Cart retrieval attempt ${attempt} failed:`, error)
+      
+      if (attempt < maxRetries) {
+        // Exponential backoff
+        const delay = Math.pow(2, attempt - 1) * 1000
+        console.log(`Retrying in ${delay}ms...`)
+        await new Promise(resolve => setTimeout(resolve, delay))
+      }
+    }
+  }
+  
+  console.error("All cart retrieval attempts failed:", lastError)
+  return null
+}
+
+async function createNewCartWithLock(regionId: string, customer: any): Promise<B2BCart | null> {
+  const lockId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+  
+  try {
+    // Check if another cart creation is in progress
+    const existingLock = await getCartCreationLock()
+    if (existingLock) {
+      console.log("Cart creation already in progress, waiting...")
+      
+      // Wait a bit and try to retrieve cart again
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      const existingCart = await retrieveCartWithRetry(1)
+      if (existingCart) {
+        console.log("Found cart created by concurrent request")
+        return existingCart
+      }
+    }
+
+    // Set creation lock
+    const lockSet = await setCartCreationLock(lockId)
+    if (!lockSet) {
+      console.error("Failed to set cart creation lock")
+    }
+
+    console.log(`Creating new cart for region: ${regionId}`)
+    
+    const headers = { ...(await getAuthHeaders()) }
+    
     const body = {
-      region_id: region.id,
+      region_id: regionId,
       metadata: {
         company_id: customer?.employee?.company_id,
       },
     }
 
     const cartResp = await sdk.store.cart.create(body, {}, headers)
+    const newCartId = cartResp.cart.id
+    
+    console.log(`Created new cart: ${newCartId}`)
 
-    setCartId(cartResp.cart.id)
+    // Set cart ID in cookies with validation
+    const cookieSet = await setCartId(newCartId)
+    if (!cookieSet) {
+      console.error("Failed to set cart ID in cookies - this will cause issues!")
+    }
+
+    // Store region ID for consistency
+    await setRegionId(regionId)
+    
+    // Store customer ID if available
+    if (customer?.id) {
+      await setCustomerId(customer.id)
+    }
 
     const cartCacheTag = await getCacheTag("carts")
     revalidateTag(cartCacheTag)
 
-    cart = await retrieveCart()
-  }
+    // Retrieve the newly created cart to ensure it exists
+    const cart = await retrieveCart(newCartId)
+    
+    if (!cart) {
+      throw new Error("Failed to retrieve newly created cart")
+    }
 
-  if (cart && cart?.region_id !== region.id) {
-    await sdk.store.cart.update(cart.id, { region_id: region.id }, {}, headers)
-    const cartCacheTag = await getCacheTag("carts")
-    revalidateTag(cartCacheTag)
-  }
+    console.log(`Successfully created and verified new cart: ${newCartId}`)
+    return cart
 
-  return cart
+  } catch (error) {
+    console.error("Failed to create new cart:", error)
+    throw error
+  } finally {
+    // Always remove the lock
+    await removeCartCreationLock()
+  }
 }
 
 export async function updateCart(data: HttpTypes.StoreUpdateCart) {

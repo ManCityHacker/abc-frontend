@@ -1,11 +1,11 @@
 "use client"
 
 import {
-  addToCartBulk,
-  deleteLineItem,
-  emptyCart,
-  updateLineItem,
-} from "@/lib/data/cart"
+  addToCartAction,
+  removeCartLineItemAction,
+  emptyCartAction,
+  updateCartLineItemAction,
+} from "@/lib/actions/cart-actions"
 import { addToCartEventBus } from "@/lib/data/cart-event-bus"
 import { ApprovalStatusType } from "@/types/approval/module"
 import { B2BCart } from "@/types/global"
@@ -161,20 +161,27 @@ export function CartProvider({
 
         setIsUpdatingCart(true)
 
-        await addToCartBulk({
+        const result = await addToCartAction({
           lineItems: payload.lineItems.map((lineItem) => ({
             variant_id: lineItem.productVariant.id,
             quantity: lineItem.quantity,
           })),
           countryCode: countryCode as string,
-        }).catch((e) => {
-          if (e.message === "Cart is pending approval") {
+        })
+
+        if (!result.success) {
+          if (result.error === "Cart is locked for approval") {
             toast.error("Cart is locked for approval.")
           } else {
-            toast.error("Failed to add to cart")
+            toast.error(result.error || "Failed to add to cart")
           }
           setOptimisticCart(prevCart)
-        })
+        } else {
+          // Success case - the cart will be updated via revalidation
+          if (result.message) {
+            toast.success(result.message)
+          }
+        }
       })
     },
     [setOptimisticCart]
@@ -214,10 +221,16 @@ export function CartProvider({
 
     setIsUpdatingCart(true)
 
-    await deleteLineItem(lineItem).catch((e) => {
-      toast.error("Failed to delete item")
+    const result = await removeCartLineItemAction(lineItem)
+    
+    if (!result.success) {
+      toast.error(result.error || "Failed to delete item")
       setOptimisticCart(prevCart)
-    })
+    } else {
+      if (result.message) {
+        toast.success(result.message)
+      }
+    }
   }
 
   const handleUpdateCartQuantity = async (
@@ -272,13 +285,17 @@ export function CartProvider({
 
     if (!isOptimisticItemId(lineItem)) {
       setIsUpdatingCart(true)
-      await updateLineItem({
-        lineId: lineItem,
-        data: { quantity },
-      }).catch((e) => {
-        toast.error("Failed to update cart quantity")
+      
+      const result = await updateCartLineItemAction(lineItem, quantity)
+      
+      if (!result.success) {
+        toast.error(result.error || "Failed to update cart quantity")
         setOptimisticCart(prevCart)
-      })
+      } else {
+        if (result.message) {
+          toast.success(result.message)
+        }
+      }
     }
   }
 
@@ -294,14 +311,20 @@ export function CartProvider({
 
     setIsUpdatingCart(true)
 
-    await emptyCart().catch((e) => {
-      toast.error("Failed to empty cart")
+    const result = await emptyCartAction()
+    
+    if (!result.success) {
+      toast.error(result.error || "Failed to empty cart")
       setOptimisticCart(prevCart)
-    })
+    } else {
+      if (result.message) {
+        toast.success(result.message)
+      }
+    }
   }
 
   const sortedItems = useMemo(() => {
-    return optimisticCart?.items?.sort((a, b) => {
+    return optimisticCart?.items?.sort((a: any, b: any) => {
       return (a.created_at ?? "") > (b.created_at ?? "") ? -1 : 1
     })
   }, [optimisticCart])
