@@ -1,7 +1,7 @@
 "use client"
 
 import AccountButton from "@/modules/account/components/account-button"
-import ClientCartWrapper from "@/modules/cart/components/client-cart-wrapper"
+import CartButton from "@/modules/cart/components/cart-button"
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
 import ClientMegaMenuWrapper from "@/modules/layout/components/client-mega-menu-wrapper"
 import MobileNavigationMenu from "@/modules/layout/components/mobile-navigation-menu"
@@ -151,7 +151,7 @@ export default function NavigationContent({ customer }: NavigationContentProps) 
 
                 <Suspense fallback={<SkeletonCartButton />}>
                   <div className="text-abc-red">
-                    <ClientCartWrapper />
+                    <CartButton customer={customer} />
                   </div>
                 </Suspense>
               </div>

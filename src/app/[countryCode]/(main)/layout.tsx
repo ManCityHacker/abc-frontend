@@ -1,7 +1,8 @@
 import { getBaseURL } from "@/lib/util/env"
 import { AuthProvider } from "@/lib/context/auth-context"
 import Footer from "@/modules/layout/templates/footer"
-import ClientNavigationWrapper from "@/modules/layout/components/client-navigation-wrapper"
+import { NavigationHeader } from "@/modules/layout/templates/nav"
+import ClientCartProvider from "@/modules/cart/components/client-cart-provider"
 import { Metadata } from "next"
 
 export const metadata: Metadata = {
@@ -11,9 +12,11 @@ export const metadata: Metadata = {
 export default async function PageLayout(props: { children: React.ReactNode }) {
   return (
     <AuthProvider initialCustomer={null}>
-      <ClientNavigationWrapper />
-      {props.children}
-      <Footer />
+      <ClientCartProvider>
+        <NavigationHeader />
+        {props.children}
+        <Footer />
+      </ClientCartProvider>
     </AuthProvider>
   )
 }
