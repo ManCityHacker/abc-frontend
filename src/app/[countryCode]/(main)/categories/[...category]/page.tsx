@@ -1,4 +1,5 @@
 import { getCategoryByHandle, listCategories } from "@/lib/data/categories"
+import { retrieveCustomer } from "@/lib/data/customer"
 import { listRegions } from "@/lib/data/regions"
 import CategoryTemplate from "@/modules/categories/templates"
 import { SortOptions } from "@/modules/store/components/refinement-list/sort-products"
@@ -68,6 +69,7 @@ export default async function CategoryPage(props: Props) {
   const { sortBy, page } = searchParams
 
   const categories = await listCategories()
+  const customer = await retrieveCustomer().catch(() => null)
 
   const currentCategory = categories.find(
     (category) => category.handle === params.category.join("/")
@@ -84,6 +86,7 @@ export default async function CategoryPage(props: Props) {
       sortBy={sortBy}
       page={page}
       countryCode={params.countryCode}
+      customer={customer}
     />
   )
 }
